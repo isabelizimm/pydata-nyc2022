@@ -1,0 +1,501 @@
+---
+title: "Holistic MLOps for better science"
+subtitle: "PyData NYC 2022"
+author: "Isabel Zimmerman, Posit PBC"
+date: "September 20, 2022"
+format:
+  revealjs: 
+    slide-number: true
+    preview-links: auto
+    theme: [simple, style.scss]
+    width: 1600
+    height: 900
+    logo: images/vetiverhex.png
+---
+
+# 
+
+
+::: {.notes}
+https://twitter.com/sh_reya/status/1521903041003225088?s=20&t=TR0pP0V-mhiPekJaJFWGXw
+:::
+
+# MLOps is...
+
+. . .
+
+a set of <u>practices</u> to *deploy* and *maintain* machine learning models in production **reliably** and **efficiently**
+
+. . .
+
+and these practices can be HARD.
+
+::: {.notes}
+
+- i said i started with Kubernetes-based + models. after a while where i STRUGGLED with the tools at hand, i felt that, as a data scientist, the tools were not built for me. they were built for a software engineer that had pretty deep knowledge of infrastructure--and i needed to productionalize models, but i didn't want to have to be a cloud architect as well a data scientist.
+
+- so i changed career paths to build new tools designed specifically for data scientists to deploy models. my current role is to develop an open source package called 
+
+- vetiver, which is an mlops framework to help data scientists in R and Python
+:::
+
+
+# 
+
+![](images/ml_ops_cycle_no_ops.png)
+
+
+::: {.notes}
+when you start learning about data science, you see an image that looks something like this: you learn about tools such as --
+
+
+and so when you write data science code in Python using the packages and BEST practices you've learned, it goes something like this:
+:::
+
+#
+
+```{python}
+#| echo: true
+#| output-location: slide
+
+import pandas as pd
+import numpy as np
+
+np.random.RandomState(500)
+raw = pd.read_csv('https://bit.ly/3sWty5A')
+df = raw[["like_count", "funny", "show_product_quickly", \
+    "celebrity", "danger", "animals"]].dropna()
+
+df.head()
+```
+
+::: {.notes}
+set seed for reproducibility
+:::
+
+#
+
+```{python}
+#| echo: true
+import pandas as pd
+import numpy as np
+
+np.random.RandomState(500)
+raw = pd.read_csv('https://bit.ly/3sWty5A')
+df = raw[["like_count", "funny", "show_product_quickly", \
+    "celebrity", "danger", "animals"]].dropna()
+
+from sklearn import model_selection, preprocessing, ensemble
+
+X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    df.drop(columns = ['like_count']),
+    df['like_count'],
+    test_size=0.2
+)
+```
+
+::: {.notes}
+split into training and test sets
+:::
+
+#
+
+```{python}
+#| echo: true
+import pandas as pd
+import numpy as np
+
+np.random.RandomState(500)
+raw = pd.read_csv('https://bit.ly/3sWty5A')
+df = raw[["like_count", "funny", "show_product_quickly", \
+    "celebrity", "danger", "animals"]].dropna()
+
+from sklearn import model_selection, preprocessing, ensemble
+
+X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    df.drop(columns = ['like_count']),
+    df['like_count'],
+    test_size=0.2
+)
+oe = preprocessing.OrdinalEncoder().fit(X_train)
+rf = ensemble.RandomForestRegressor().fit(oe.transform(X_train), y_train)
+```
+
+::: {.notes}
+choose the right feature engineering for the job, and train your model
+:::
+
+# 
+
+::: {.r-fit-text}
+if you develop models...
+
+:::
+
+::: {.notes}
+you need to figure out how to share this model with teammates in a way that DOESNT include emailing your model to other people, you need to integrate it into some larger application, you need to ensure that it still performs well a week from now, or a month from now
+
+you start to realize that these practices are not always enough!
+:::
+
+# 
+
+::: {.r-fit-text}
+if you develop models...
+
+*you probably should operationalize them*
+:::
+
+::: {.notes}
+the business values of models generally 
+:::
+
+
+# 
+
+![](images/ml_ops_cycle.png)
+
+::: {.notes}
+
+:::
+
+## list what is happening
+
+
+## versioning
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">version control? oh yeah, I love version control <a href="https://t.co/wYF80u4xMX">pic.twitter.com/wYF80u4xMX</a></p>&mdash; Jake Hannan (@_jhannan) <a href="https://twitter.com/_jhannan/status/1579524646143418368?ref_src=twsrc%5Etfw">October 10, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+::: {.notes}
+versioning your model is the foundation for success in machine learning deployments
+:::
+
+## version the whole process 🙂
+
+_managing_ change in your _model_
+
+#
+
+![](./images/bad-workflow.svg)
+
+::: footer
+www.tmwr.org/workflows.html
+:::
+
+#
+
+![](./images/proper-workflow.svg)
+
+::: footer
+www.tmwr.org/workflows.html
+:::
+
+#
+
+```{python}
+#| echo: true
+from sklearn import model_selection, preprocessing, pipeline, ensemble
+X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    df.drop(columns = ['like_count']),
+    df['like_count'],
+    test_size=0.2
+)
+oe = preprocessing.OrdinalEncoder().fit(X_train)
+rf = ensemble.RandomForestRegressor().fit(oe.transform(X_train), y_train)
+```
+
+#
+
+```{python}
+#| echo: true
+from sklearn import model_selection, preprocessing, pipeline, ensemble
+X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    df.drop(columns = ['like_count']),
+    df['like_count'],
+    test_size=0.2
+)
+oe = preprocessing.OrdinalEncoder().fit(X_train)
+rf = ensemble.RandomForestRegressor().fit(oe.transform(X_train), y_train)
+rf_pipe = pipeline.Pipeline([('ordinal_encoder',oe), ('random_forest', rf)])
+```
+
+::: {.notes}
+To do this properly, no data-driven parts of the analysis should be excluded from validation. 
+
+The fallacy here is that, although PCA does significant computations to produce the components, its operations are assumed to have no uncertainty associated with them. The PCA components are treated as known and, if not included in the model workflow, the effect of PCA could not be adequately measured.
+:::
+
+## version the whole process 🙂
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">version control? oh yeah, I love version control <a href="https://t.co/wYF80u4xMX">pic.twitter.com/wYF80u4xMX</a></p>&mdash; Jake Hannan (@_jhannan) <a href="https://twitter.com/_jhannan/status/1579524646143418368?ref_src=twsrc%5Etfw">October 10, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+## version the whole process 🙂
+
+::: {.incremental}
+- living in a central location
+- discoverable by team
+- load right into memory
+:::
+
+#
+
+```{python}
+#| echo: true
+#| eval: false
+import pins
+from vetiver import VetiverModel, vetiver_pin_write
+
+model_board = pins.board_temp(
+    allow_pickle_read = True)
+
+v = VetiverModel(rf_pipe, "ads")
+```
+
+#
+
+```{python}
+#| echo: true
+#| eval: false
+import pins
+from vetiver import VetiverModel, vetiver_pin_write
+
+model_board = pins.board_temp(
+    allow_pickle_read = True)
+
+v = VetiverModel(rf_pipe, "ads")
+vetiver_pin_write(model_board, v)
+```
+
+#
+
+::: {.panel-tabset}
+
+### Python
+```{python}
+#| echo: true
+#| eval: false
+import pins
+from vetiver import VetiverModel, vetiver_pin_write
+
+model_board = pins.board_temp(
+    allow_pickle_read = True)
+
+v = VetiverModel(rf_pipe, "ads")
+vetiver_pin_write(model_board, v)
+```
+
+### R
+
+``` r
+library(vetiver)
+library(pins)
+
+model_board <- board_temp()
+
+v <- vetiver_model(rf, "ads")
+model_board %>% 
+  vetiver_pin_write(v)
+```
+:::
+
+::: {.notes}
+writing data to the pin
+:::
+
+
+## know what your input data should look like 😁
+
+- save a piece of your data to better debug when things go wrong
+
+:::{.notes}
+trying to figure out how to solve a puzzle is a lot harder when you don't know what the finished product looks like
+:::
+
+#
+
+```{python}
+#| echo: true
+#| eval: false
+import pins
+from vetiver import VetiverModel, vetiver_pin_write
+
+model_board = pins.board_temp(
+    allow_pickle_read = True)
+
+v = VetiverModel(rf, "ads", ptype_data = X_train)
+vetiver_pin_write(model_board, rf)
+```
+
+## utilizing model cards 🥳
+
+not only good models, but _good_ models
+
+## utilizing model cards 🥳
+
+``` python
+vetiver.vetiver_pin_write(model_board, v)
+```
+
+. . .
+
+``` bash
+Model Cards provide a framework for transparent, responsible reporting. 
+ Use the vetiver `.qmd` Quarto template as a place to start, 
+ with vetiver.model_card()
+```
+
+## utilizing model cards 🥳
+
+``` python
+vetiver.vetiver_pin_write(model_board, v)
+
+vetiver.model_card()
+```
+
+## utilizing model cards 🥳
+
+![](images/title.png)
+
+
+## utilizing model cards 🥳
+
+![](images/quant.png)
+
+## utilizing model cards 🥳
+
+![](images/ethics.png)
+
+::: {.notes}
+my model doesn't have any ethical challenges, it's predicting youtube likes
+
+- Also, consider the possibility of gathering feedback from those impacted by the machine learning system, especially those with marginalized identities.
+
+- However, we strongly advise that instead of deleting any such section because you have incomplete or imprecise information, you note your own process and considerations. 
+:::
+
+## utilizing model cards 🥳
+
+- summary
+- documentation
+- fairness
+
+From [Mitchell et al. (2019)](https://dl.acm.org/doi/10.1145/3287560.3287596):
+
+::: r-fit-text
+> _Therefore the usefulness and accuracy of a model card relies on the integrity of the creator(s) of the card itself._
+:::
+
+::: {.notes}
+The process of documenting the extent and limits of a machine learning system is part of transparent, responsible reporting. 
+
+ultimately the extent of its value depends on you
+
+actually, my dad has a quote that he always tells me--"if you haven't written it down, you haven't thought it out"
+:::
+
+## deploy your model 🙂
+
+{image of moving model from local computer to different infrastructure}
+
+::: {.notes}
+creating model as a REST API endpoint
+
+useful bc model can be used in memory just like you loaded it! without having to load it
+
+also useful since API endpoints are testable, 
+:::
+
+## deploy your model 🙂
+
+``` python
+vetiver.deploy_rsconnect(
+    connect_server = connect_server, 
+    board = model_board, 
+    pin_name = "ads", 
+    version = "59869")
+```
+
+## deploy your model 🙂
+
+```python
+vetiver.write_app(board=board, pin_name="ads", version = "59869")
+vetiver.write_docker(app_file="app.py")
+```
+::: {.notes}
+with this docker container in hand, you can bring your model to numerous cloud services!
+
+AWS ECR + ECS
+Azure container registry and app service
+:::
+
+
+## monitoring 🥳
+
+::: {.notes}
+model is deployed
+
+a data scientist's work is not done!
+
+continuous monitoring-- continue to track how the model
+:::
+
+## monitoring 🥳
+
+- models fail silently
+
+::: {.notes}
+it is SO IMPORTANT TO TRACK your model's performance metrics start decaying.
+
+software engineering--when things went wrong, ERROR
+
+models fail silently! and they can still run with no error, even if your accuracy is zero percent--
+
+if you are not monitoring your model in some way, you are oblivious to decay.
+:::
+
+## model doesn't live in deployment 😁
+
+- where is this model stored?
+- where is it deployed?
+
+{iterations of images to display this}
+(immediately painful)
+
+::: {.notes}
+your model is deployed, and you are happily using it! but, maybe you 
+
+model lives inside container, this process is immediately painful
+before you even update, container is larger. 
+to update, you save model in container. if you are using versioned models inside your container, now you have two models in there (not going to be easily accessible to others to pin_read, unless you are ALSO storing them somewhere else). 
+
+you change the version number inside your dockerfile, redeploy.
+
+OR you save the model inside your container, delete previous model to avoid bloat, and lose all benefits from versioning.
+
+model lives outside container. you pin your model to the board that lives on, say, s3. you change the version number inside your dockerfile, redeploy.
+:::
+
+##
+
+{a few iterations of images to display this}
+(painful longer term)
+
+::: {.notes}
+For monitoring, if the model artifact lives inside a container, you end up needing a more complicated infrastructure. 
+
+Monitoring usually involves more dependencies but doesn’t need to be as performant. 
+
+Are you going to spin up another container from your “real” production image to use for monitoring purposes only? Probably don’t want to make HTTP calls to a real production container for your monitoring. 
+
+For monitoring, it probably doesn’t really help to get new predictions over HTTP anyway (can predict in the same computational environment as where the validation data is).
+
+ad-hoc analysis of models over time. If the models exist inside containers, those containers have to be spun up and deployed to do analysis with them over multiple versions of models.
+:::
+
+
+# Recap
+
+## Resources
+
+- ML Scorecard
+- Vetiver docs

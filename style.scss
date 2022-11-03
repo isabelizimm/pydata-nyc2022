@@ -1,0 +1,50 @@
+/*-- scss:defaults --*/
+@font-face {
+    font-family: 'FiraCode';
+    src: url('../../../../../font/FiraCode-SemiBold.woff2') format('woff2'),
+         url('../../../../../font/FiraCode-SemiBold.woff') format('woff');
+}
+
+$font-family-monospace: 'FiraCode';
+
+$theme-sand: #FCF5EF;
+$theme-white: #FFFFFF;
+
+$body-bg: $theme-white;
+
+/*-- scss:rules --*/
+
+.reveal pre code {
+  background-color: #232525;
+  color: #A9B7C6;
+}
+
+.reveal div.sourceCode pre code {
+  padding: 25px;
+}
+
+.reveal div.sourceCode {
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 10px !important;
+  box-shadow: 0 20px 47px rgb(0 0 0 / 55%);
+  width: fit-content;
+  margin: auto !important;
+}
+
+code span.er {
+  color: #ebcb8b;
+  text-decoration: none;
+}
+
+.reveal .slide-logo {
+    max-height: 50px !important;
+  }
+  
+.reveal .footer {
+    background-color: $theme-sand;
+    padding-top: 30px;
+    padding-bottom: 20px;
+    bottom: 0px !important; // makes sure there isn't any space below the footer box
+    z-index: -1 !important; // makes sure it is places behind the logo
+  }
