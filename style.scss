@@ -36,15 +36,3 @@ code span.er {
   color: #ebcb8b;
   text-decoration: none;
 }
-
-.reveal .slide-logo {
-    max-height: 50px !important;
-  }
-  
-.reveal .footer {
-    background-color: $theme-sand;
-    padding-top: 30px;
-    padding-bottom: 20px;
-    bottom: 0px !important; // makes sure there isn't any space below the footer box
-    z-index: -1 !important; // makes sure it is places behind the logo
-  }
